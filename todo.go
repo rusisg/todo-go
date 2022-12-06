@@ -3,9 +3,12 @@ package todo
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io/ioutil"
 	"os"
 	"time"
+
+	"github.com/alexeyco/simpletable"
 )
 
 type item struct {
@@ -71,4 +74,39 @@ func (t *Todos) Store(filename string) error {
 		return err
 	}
 	return ioutil.WriteFile(filename, data, 0644)
+}
+
+func (t *Todos) Print() {
+	table := simpletable.New()
+	table.Header = &simpletable.Header{
+		Cells: []*simpletable.Cell{
+			{Align: simpletable.AlignCenter, Text: "#"},
+			{Align: simpletable.AlignCenter, Text: "Task"},
+			{Align: simpletable.AlignCenter, Text: "Done?"},
+			{Align: simpletable.AlignRight, Text: "CreatedAt"},
+			{Align: simpletable.AlignRight, Text: "FinishedAt"},
+		},
+	}
+	var cells [][]*simpletable.Cell
+	for idx, item := range *t {
+		idx++
+		cells = append(cells, *&[]*simpletable.Cell{
+			{Text: fmt.Sprintf("%d", idx)},
+			{Text: item.Task},
+			{Text: fmt.Sprintf("%t", item.Done)},
+			{Text: item.CreatedAt.Format(time.RFC822)},
+			{Text: item.FinishedAt.Format(time.RFC822)},
+		})
+
+	}
+
+	table.Body = &simpletable.Body{Cells: cells}
+
+	table.Footer = &simpletable.Footer{Cells: []*simpletable.Cell{
+		{Align: simpletable.AlignCenter, Span: 5, Text: "Your todos are here"},
+	}}
+
+	table.SetStyle(simpletable.StyleUnicode)
+
+	table.Println()
 }
